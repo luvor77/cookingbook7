@@ -1,8 +1,12 @@
 @import "tailwindcss";
+@theme inline {
+  --color-destructive-foreground: var(--destructive-foreground);
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --destructive-foreground: oklch(1 0 0);
 }
 
 @theme inline {
@@ -16,6 +20,7 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --destructive-foreground: oklch(1 0 0);
   }
 }
 
