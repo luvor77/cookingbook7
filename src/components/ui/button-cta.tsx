@@ -7,6 +7,7 @@ type Props = {
   title?: string;
   children?: React.ReactNode;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement>;
 };
 
 export const Component: React.FC<Props> = ({
@@ -14,6 +15,7 @@ export const Component: React.FC<Props> = ({
   title = "Explore CAT UI",
   children,
   className,
+  onClick,
 }) => {
   const isInternal = href?.startsWith("/");
   return (
@@ -23,6 +25,7 @@ export const Component: React.FC<Props> = ({
         <Link
           href={href}
           title={title}
+          onClick={onClick as React.MouseEventHandler<HTMLAnchorElement>}
           className={cn(
             "group relative inline-flex items-center justify-center text-base rounded-md bg-gray-900 px-8 py-2 text-lg font-semibold text-white transition-all duration-200 hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gray-600/30",
             className,
@@ -51,6 +54,7 @@ export const Component: React.FC<Props> = ({
           href={href}
           target="_blank"
           rel="noreferrer noopener"
+          onClick={onClick as React.MouseEventHandler<HTMLAnchorElement>}
         >
           {children ?? "Explore CAT UI"}
           <svg

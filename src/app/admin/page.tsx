@@ -6,7 +6,21 @@ import { useRouter } from "next/navigation";
 
 type Lesson = { id: string; title: string; videoUrl: string };
 type Meal = "breakfast" | "lunch" | "dinner";
-type Recipe = { id: string; title: string; description?: string; photo?: string; lessons: Lesson[]; createdAt: string; meal: Meal };
+type Ingredient = { id: string; name: string; amount?: string };
+type Recipe = {
+  id: string;
+  title: string;
+  description?: string;
+  photo?: string;
+  lessons: Lesson[];
+  createdAt: string;
+  meal: Meal;
+  calories?: number;
+  proteins?: number;
+  fats?: number;
+  carbs?: number;
+  ingredients?: Ingredient[];
+};
 
 const STORAGE_KEY = "recipes";
 
@@ -28,12 +42,17 @@ function saveRecipes(data: Recipe[]) {
 export default function AdminPage() {
   const router = useRouter();
   const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
   const [photoDataUrl, setPhotoDataUrl] = React.useState<string | undefined>();
   const [lessons, setLessons] = React.useState<Lesson[]>([]);
+  const [ingredients, setIngredients] = React.useState<Ingredient[]>([]);
   const [list, setList] = React.useState<Recipe[]>([]);
   const [saved, setSaved] = React.useState(false);
   const [meal, setMeal] = React.useState<Meal>("breakfast");
+  const [calories, setCalories] = React.useState<string>("");
+  const [proteins, setProteins] = React.useState<string>("");
+  const [fats, setFats] = React.useState<string>("");
+  const [carbs, setCarbs] = React.useState<string>("");
+  const [editingId, setEditingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setList(loadRecipes());
@@ -51,35 +70,80 @@ export default function AdminPage() {
     setLessons((p) => p.filter((l) => l.id !== id));
   }, []);
 
+  const addIngredient = React.useCallback(() => {
+    setIngredients((p) => [...p, { id: crypto.randomUUID(), name: "", amount: "" }]);
+  }, []);
+
+  const updateIngredient = React.useCallback((id: string, patch: Partial<Ingredient>) => {
+    setIngredients((p) => p.map((ing) => (ing.id === id ? { ...ing, ...patch } : ing)));
+  }, []);
+
+  const removeIngredient = React.useCallback((id: string) => {
+    setIngredients((p) => p.filter((ing) => ing.id !== id));
+  }, []);
+
   const onSave = React.useCallback(() => {
     if (!title.trim()) return;
-    const recipe: Recipe = {
-      id: crypto.randomUUID(),
+    const base: Recipe = {
+      id: editingId ?? crypto.randomUUID(),
       title: title.trim(),
-      description: description.trim() || undefined,
       photo: photoDataUrl,
       lessons: lessons
-        .filter((l) => l.title.trim() && l.videoUrl.trim())
-        .map((l) => ({ ...l, title: l.title.trim(), videoUrl: l.videoUrl.trim() })),
-      createdAt: new Date().toISOString(),
+        .filter((l) => l.videoUrl.trim())
+        .map((l, idx) => ({
+          ...l,
+          title: l.title?.trim() || `Урок ${idx + 1}`,
+          videoUrl: l.videoUrl.trim(),
+        })),
+      createdAt: editingId ? (list.find((r) => r.id === editingId)?.createdAt ?? new Date().toISOString()) : new Date().toISOString(),
       meal,
+      calories: calories ? Number(calories) : undefined,
+      proteins: proteins ? Number(proteins) : undefined,
+      fats: fats ? Number(fats) : undefined,
+      carbs: carbs ? Number(carbs) : undefined,
+      ingredients: ingredients
+        .filter((ing) => ing.name.trim())
+        .map((ing) => ({ ...ing, name: ing.name.trim(), amount: ing.amount?.trim() || undefined })),
     };
-    const next = [...list, recipe];
+    const next = editingId
+      ? list.map((r) => (r.id === editingId ? base : r))
+      : [...list, base];
     saveRecipes(next);
     setList(next);
     setTitle("");
-    setDescription("");
     setLessons([]);
     setPhotoDataUrl(undefined);
+    setCalories("");
+    setProteins("");
+    setFats("");
+    setCarbs("");
+    setIngredients([]);
+    setEditingId(null);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
     router.push(`/plan/${meal}`);
-  }, [title, description, lessons, list, meal, router, photoDataUrl]);
+  }, [title, lessons, list, meal, router, photoDataUrl, calories, proteins, fats, carbs, editingId, ingredients]);
 
   const onDelete = React.useCallback((id: string) => {
     const next = list.filter((r) => r.id !== id);
     saveRecipes(next);
     setList(next);
+  }, [list]);
+
+  const onEdit = React.useCallback((id: string) => {
+    const r = list.find((x) => x.id === id);
+    if (!r) return;
+    setEditingId(r.id);
+    setMeal(r.meal);
+    setTitle(r.title);
+    setPhotoDataUrl(r.photo);
+    setLessons(r.lessons);
+    setCalories(r.calories != null ? String(r.calories) : "");
+    setProteins(r.proteins != null ? String(r.proteins) : "");
+    setFats(r.fats != null ? String(r.fats) : "");
+    setCarbs(r.carbs != null ? String(r.carbs) : "");
+    setIngredients(r.ingredients ?? []);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [list]);
 
   return (
@@ -109,13 +173,76 @@ export default function AdminPage() {
             placeholder="Название рецепта"
             className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
           />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Описание рецепта"
-            rows={4}
-            className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
-          />
+          <div className="mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-white">Состав</h2>
+              <button
+                onClick={addIngredient}
+                className="rounded-md bg-white/10 text-white px-3 py-2 hover:bg-white/15 transition"
+              >
+                Добавить
+              </button>
+            </div>
+            <div className="grid gap-2">
+              {ingredients.map((ing) => (
+                <div key={ing.id} className="grid grid-cols-2 gap-2 rounded-md border border-white/10 p-3">
+                  <input
+                    value={ing.name}
+                    onChange={(e) => updateIngredient(ing.id, { name: e.target.value })}
+                    placeholder="Продукт"
+                    className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-3 py-2 outline-none focus:ring-2 ring-white/30"
+                  />
+                  <input
+                    value={ing.amount ?? ""}
+                    onChange={(e) => updateIngredient(ing.id, { amount: e.target.value })}
+                    placeholder="Количество (г/шт)"
+                    className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-3 py-2 outline-none focus:ring-2 ring-white/30"
+                  />
+                  <div className="col-span-2 flex justify-end">
+                    <button
+                      onClick={() => removeIngredient(ing.id)}
+                      className="rounded-md bg-white/10 text-white px-3 py-2 hover:bg-white/15 transition"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {ingredients.length === 0 && (
+                <div className="text-white/60 text-sm">Пока ни одного ингредиента</div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <input
+              value={calories}
+              onChange={(e) => setCalories(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="Калорийность, ккал"
+              inputMode="decimal"
+              className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
+            />
+            <input
+              value={proteins}
+              onChange={(e) => setProteins(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="Белки, г"
+              inputMode="decimal"
+              className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
+            />
+            <input
+              value={fats}
+              onChange={(e) => setFats(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="Жиры, г"
+              inputMode="decimal"
+              className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
+            />
+            <input
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder="Углеводы, г"
+              inputMode="decimal"
+              className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-4 py-3 outline-none focus:ring-2 ring-white/30"
+            />
+          </div>
           <div className="grid gap-2">
             <input
               type="file"
@@ -155,15 +282,9 @@ export default function AdminPage() {
               {lessons.map((l) => (
                 <div key={l.id} className="grid gap-2 rounded-md border border-white/10 p-3">
                   <input
-                    value={l.title}
-                    onChange={(e) => updateLesson(l.id, { title: e.target.value })}
-                    placeholder="Название урока"
-                    className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-3 py-2 outline-none focus:ring-2 ring-white/30"
-                  />
-                  <input
                     value={l.videoUrl}
                     onChange={(e) => updateLesson(l.id, { videoUrl: e.target.value })}
-                    placeholder="Ссылка на видео (YouTube/Vimeo/файл)"
+                    placeholder="Ссылка на видеоурок"
                     className="w-full rounded-md bg-white/10 text-white placeholder-white/60 px-3 py-2 outline-none focus:ring-2 ring-white/30"
                   />
                   <div className="flex justify-end">
@@ -184,7 +305,7 @@ export default function AdminPage() {
               onClick={onSave}
               className="group relative inline-flex items-center justify-center text-base rounded-md bg-gray-900 px-8 py-2 text-lg font-semibold text-white transition-all duration-200 hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 hover:shadow-gray-600/30 w-[260px]"
             >
-              Сохранить рецепт
+              {editingId ? "Сохранить изменения" : "Сохранить рецепт"}
             </button>
           </div>
         </div>
@@ -198,15 +319,40 @@ export default function AdminPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-white font-semibold">{r.title}</p>
-                    <p className="text-white/70 text-sm mt-1">{r.description}</p>
+                    {((r.ingredients && r.ingredients.length > 0) || r.description) && (
+                      <p className="text-white/70 text-sm mt-1">
+                        {(r.ingredients && r.ingredients.length > 0)
+                          ? r.ingredients.map((i) => i.name).filter(Boolean).join(", ")
+                          : r.description}
+                      </p>
+                    )}
                     <p className="text-white/70 text-xs mt-1">Уроков: {r.lessons.length}</p>
+                    {(r.calories != null ||
+                      r.proteins != null ||
+                      r.fats != null ||
+                      r.carbs != null) && (
+                      <p className="text-white/70 text-xs mt-1">
+                        {r.calories != null && <>Ккал: {r.calories} </>}
+                        {r.proteins != null && <>• Б: {r.proteins} г </>}
+                        {r.fats != null && <>• Ж: {r.fats} г </>}
+                        {r.carbs != null && <>• У: {r.carbs} г</>}
+                      </p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => onDelete(r.id)}
-                    className="rounded-md bg-white/10 text-white px-3 py-2 hover:bg-white/15 transition"
-                  >
-                    Удалить
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => onEdit(r.id)}
+                      className="rounded-md bg-white/10 text-white px-3 py-2 hover:bg-white/15 transition"
+                    >
+                      Изменить
+                    </button>
+                    <button
+                      onClick={() => onDelete(r.id)}
+                      className="rounded-md bg-white/10 text-white px-3 py-2 hover:bg-white/15 transition"
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
