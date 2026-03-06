@@ -14,7 +14,7 @@ export default function Home() {
       </div>
       <div
         className="fixed z-20 left-1/2 -translate-x-1/2 w-full px-4 sm:px-6"
-        style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        style={{ bottom: "max(3rem, calc(env(safe-area-inset-bottom) + 1rem))" }}
       >
         <div className="flex justify-center">
           <CTAButton>Собрать рацион</CTAButton>
