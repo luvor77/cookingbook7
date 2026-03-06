@@ -17,13 +17,13 @@ export default function PlanPage() {
         </div>
         <div className="w-full px-4 sm:px-6 mt-8">
           <div className="flex flex-col items-center gap-4">
-            <CTAButton href="/plan?meal=breakfast" className="w-[280px] justify-center">
+            <CTAButton href="/plan/breakfast" className="w-[280px] justify-center">
               Выбрать завтрак
             </CTAButton>
-            <CTAButton href="/plan?meal=lunch" className="w-[280px] justify-center">
+            <CTAButton href="/plan/lunch" className="w-[280px] justify-center">
               Выбрать обед
             </CTAButton>
-            <CTAButton href="/plan?meal=dinner" className="w-[280px] justify-center">
+            <CTAButton href="/plan/dinner" className="w-[280px] justify-center">
               Выбрать ужин
             </CTAButton>
           </div>

@@ -1,9 +1,18 @@
+import Link from "next/link";
 import { BeamsBackground } from "@/components/ui/beams-background";
 import { Component as CTAButton } from "@/components/ui/button-cta";
+import { Settings } from "lucide-react";
 
 export default function Home() {
   return (
     <BeamsBackground showDemoText={false}>
+      <Link
+        href="/admin"
+        aria-label="Админ‑панель"
+        className="fixed right-4 top-4 z-30 rounded-md bg-white/10 text-white backdrop-blur px-3 py-2 hover:bg-white/15 transition"
+      >
+        <Settings className="w-5 h-5" />
+      </Link>
       <div className="flex flex-col items-center gap-3 md:gap-4 px-4 sm:px-6 text-center -translate-y-16 sm:-translate-y-20 md:-translate-y-28">
         <h1 className="text-3xl sm:text-5xl md:text-7xl font-semibold text-white tracking-tighter">
           Собери свой рацион
