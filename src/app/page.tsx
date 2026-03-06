@@ -4,7 +4,7 @@ import { Component as CTAButton } from "@/components/ui/button-cta";
 export default function Home() {
   return (
     <BeamsBackground showDemoText={false}>
-      <div className="flex flex-col items-center gap-3 md:gap-4 px-4 sm:px-6 text-center">
+      <div className="flex flex-col items-center gap-3 md:gap-4 px-4 sm:px-6 text-center -translate-y-16 sm:-translate-y-20 md:-translate-y-28">
         <h1 className="text-3xl sm:text-5xl md:text-7xl font-semibold text-white tracking-tighter">
           Собери свой рацион
         </h1>
@@ -14,7 +14,7 @@ export default function Home() {
       </div>
       <div
         className="fixed z-20 left-1/2 -translate-x-1/2 w-full px-4 sm:px-6"
-        style={{ bottom: "max(3rem, calc(env(safe-area-inset-bottom) + 1rem))" }}
+        style={{ bottom: "max(10rem, calc(env(safe-area-inset-bottom) + 3rem))" }}
       >
         <div className="flex justify-center">
           <CTAButton>Собрать рацион</CTAButton>
