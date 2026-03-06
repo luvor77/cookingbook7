@@ -17,7 +17,7 @@ export default function Home() {
         style={{ bottom: "max(10rem, calc(env(safe-area-inset-bottom) + 3rem))" }}
       >
         <div className="flex justify-center">
-          <CTAButton>Собрать рацион</CTAButton>
+          <CTAButton href="/plan">Собрать рацион</CTAButton>
         </div>
       </div>
     </BeamsBackground>
